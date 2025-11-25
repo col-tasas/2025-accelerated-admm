@@ -8,7 +8,7 @@
 <!-- [![Scholar][scholar-shield]][scholar-url] -->
 <!-- [![Webpage][webpage-shield]][webpage-url] -->
 
-# A Linear Parameter-Varying Framework for the Analysis of Time-Varying Optimization Algorithms
+# Accelerated ADMM: Automated Parameter Tuning and Improved Linear Convergence
 This repository contains the code from our paper
 
 > M. Tavakoli, F. Jakob, G. Carnevale, G. Notarstefano, and A. Iannelli. "Accelerated ADMM: Automated Parameter Tuning and Improved Linear Convergence." 
