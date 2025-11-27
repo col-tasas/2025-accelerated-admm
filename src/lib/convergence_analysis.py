@@ -6,7 +6,7 @@ from lib.build_interconnection import build_appended_system
 from lib.build_interconnection import combine_filters_different_nonlinearities
 
 
-def compute_rho_for_aC_hat_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, eps=1e-6, alpha=1):
+def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, eps=1e-6, alpha=1):
     """
     Computes the worst-case convergence rate (rho_ADMM) for the ADMM sector method.
 
