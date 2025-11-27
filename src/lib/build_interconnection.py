@@ -2,6 +2,7 @@ import numpy as np
 import control as ctrl
 from scipy.linalg import block_diag
 
+
 def build_appended_system(plant, unique_filter):
     """
     Constructs an appended system in ctrl.ss form using the plant and unique filter.

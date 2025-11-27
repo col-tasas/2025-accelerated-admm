@@ -1,9 +1,8 @@
 import numpy as np
 import os
 import json
-from fct.admm_functions import compute_rho_for_acc_admm
+from lib.convergence_analysis import compute_rho_for_acc_admm
  
-
 
 def choose_adaptive_intervals(kappa: float, n_points: int = 20):
     """

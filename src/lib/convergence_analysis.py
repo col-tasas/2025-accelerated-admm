@@ -2,23 +2,23 @@ import numpy as np
 import cvxpy as cvx
 import control as ctrl
 import scipy.linalg as linalg
-from fct.build_interconnection import build_appended_system
-from fct.build_interconnection import combine_filters_different_nonlinearities
+from lib.build_interconnection import build_appended_system
+from lib.build_interconnection import combine_filters_different_nonlinearities
 
 
-def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, eps=1e-6, alpha=1):
+def compute_rho_for_aC_hat_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, eps=1e-6, alpha=1):
     """
-    Computes the worst-case convergence rate (ρ_ADMM) for the ADMM sector method.
+    Computes the worst-case convergence rate (rho_ADMM) for the ADMM sector method.
 
     Parameters:
         m (float): Strong convexity parameter.
         L (float): Smoothness parameter.
-        rho_max (float): Initial maximum value of ρ.
+        rho_max (float): Initial maximum value of rho.
         eps (float): Small positive tolerance.
         alpha (float): ADMM relaxation parameter.
 
     Returns:
-        float: Worst-case convergence rate (ρ_ADMM).
+        float: Worst-case convergence rate (rho_ADMM).
     """
     rho_min = 0
     rho_tol = 1e-3
@@ -39,7 +39,6 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
         v1 = 1/L 
         v2 = (np.sqrt(kappa)-1)/(np.sqrt(kappa)+1) 
         alpha = 1
-
     
     elif algo=='A-ADMM (TM)':
         gamma = 1-(1/np.sqrt(kappa))
@@ -74,31 +73,31 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
 
 
         if algo=='A-ADMM (TM, λ-damped)':
-            AA = np.array([[0, 0, 1, 0], 
-                           [0, 0, 0, 1], 
-                           [0, 0, damp, 0],
-                           [-v2*(alpha-1), -v2, (alpha-1)*(1+v2), 1+v2]])
-            BB = np.array([[0, 0],
-                           [0, 0],
-                           [0, -v1*damp],
-                           [alpha*v1, -v1]])
+            A_hat = np.array([[0, 0, 1, 0], 
+                              [0, 0, 0, 1], 
+                              [0, 0, damp, 0],
+                              [-v2*(alpha-1), -v2, (alpha-1)*(1+v2), 1+v2]])
+            B_hat = np.array([[0, 0],
+                              [0, 0],
+                              [0, -v1*damp],
+                              [alpha*v1, -v1]])
             
         else:
-            AA = np.array([[0, 0, 1, 0], 
-                           [0, 0, 0, 1], 
-                           [0, 0, 0, 0],
-                           [-v2*(alpha-1), -v2, (alpha-1)*(1+v2), 1+v2]])
-            BB = np.array([[0, 0],
-                           [0, 0],
-                           [0, -v1],
-                           [alpha*v1, -v1]])
+            A_hat = np.array([[0, 0, 1, 0], 
+                              [0, 0, 0, 1], 
+                              [0, 0, 0, 0],
+                              [-v2*(alpha-1), -v2, (alpha-1)*(1+v2), 1+v2]])
+            B_hat = np.array([[0, 0],
+                              [0, 0],
+                              [0, -v1],
+                              [alpha*v1, -v1]])
             
-        CC = np.array([[v2,             v2,          -(1+v2), -(1+v2)],
-                       [-v2*(alpha-1), -v2, (alpha-1)*(1+v2),    1+v2]])
-        DD = np.array([[-v1,        0], 
-                       [alpha*v1, -v1]])
+        C_hat = np.array([[v2,             v2,          -(1+v2), -(1+v2)],
+                          [-v2*(alpha-1), -v2, (alpha-1)*(1+v2),    1+v2]])
+        D_hat = np.array([[-v1,        0], 
+                          [alpha*v1, -v1]])
         
-        sys = ctrl.ss(AA, BB, CC, DD, dt=1, name='G')
+        sys = ctrl.ss(A_hat, B_hat, C_hat, D_hat, dt=1, name='G')
         
         ### ACAUSAL ZAMES-FALB IQC ###  
         # Filter is implemented as \Psi(z) in Van Scoy et al (2022) - Absolute Stability via Interpolation and Lifting (above eq. (8))
@@ -135,12 +134,12 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
         Psi_zInf = ctrl.ss(A_psi, B_psi, C_psi, D_psi, dt=1, name='Psi_zInf')
         Psi_mL   = ctrl.ss(A_psi, B_psi@Sml, C_psi, D_psi@Sml, dt=1, name='Psi_mL')
 
-        unique_filter = combine_filters_different_nonlinearities(2, Psi_mL, Psi_zInf)
-        sys_ap = build_appended_system(sys,unique_filter)
-        A1, B1, C1, D1 = ctrl.ssdata(sys_ap)
+        Psi = combine_filters_different_nonlinearities(2, Psi_mL, Psi_zInf)
+        sys_aug = build_appended_system(sys, Psi)
+        AA, BB, CC, DD = ctrl.ssdata(sys_aug)
 
-        nx = A1.shape[0]
-        nu = B1.shape[1]
+        nx = AA.shape[0]
+        nu = BB.shape[1]
 
         # Define variables and LMI constraints
         P = cvx.Variable((nx, nx), symmetric=True)
@@ -165,9 +164,9 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
         Multiplier = cvx.bmat([[Multiplier_mL,                     np.zeros((2*(n_ZF+1),2*(n_ZF+1)))],
                                [np.zeros((2*(n_ZF+1),2*(n_ZF+1))), Multiplier_zInf]])
         
-        LMI1 = cvx.bmat([[A1, B1]]).T @ P @ cvx.bmat([[A1, B1]])
+        LMI1 = cvx.bmat([[AA, BB]]).T @ P @ cvx.bmat([[AA, BB]])
         LMI2 = cvx.bmat([[P, np.zeros((nx, nu))], [np.zeros((nu, nx)), np.zeros((nu, nu))]])
-        LMI3 = cvx.bmat([[C1, D1]]).T @ Multiplier @ cvx.bmat([[C1, D1]])
+        LMI3 = cvx.bmat([[CC, DD]]).T @ Multiplier @ cvx.bmat([[CC, DD]])
 
         LMI = LMI1 - rho**2 * LMI2 + LMI3
 
@@ -176,13 +175,13 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
         # Condition of the multipliers pi are chosen as in Scherer (2023) - Robust Exponential Stability and Inviariance Guarantees with General Dynamic OZF Multipliers (eq. (26))
         vec_rho = (rho**2) ** np.arange(1, n_ZF+1)
         vec_rho_inv = (rho**-2) ** np.arange(1, n_ZF+1)
-        constraints_ZF1 = [pi_mL_0 >= 0, 
-                           pi_mL_c <= 0, 
+        constraints_ZF1 = [pi_mL_0  >= 0, 
+                           pi_mL_c  <= 0, 
                            pi_mL_ac <= 0,
                            pi_mL_0 + vec_rho @ pi_mL_c + vec_rho_inv @ pi_mL_ac >= 0,
                            pi_mL_0 + vec_rho_inv @ pi_mL_c + vec_rho @ pi_mL_ac >= 0]
-        constraints_ZF2 = [pi_zInf_0 >= 0, 
-                           pi_zInf_c <= 0,
+        constraints_ZF2 = [pi_zInf_0  >= 0, 
+                           pi_zInf_c  <= 0,
                            pi_zInf_ac <= 0,
                            pi_zInf_0 + vec_rho @ pi_zInf_c + vec_rho_inv @ pi_zInf_ac >= 0,
                            pi_zInf_0 + vec_rho_inv @ pi_zInf_c + vec_rho @ pi_zInf_ac >= 0]
