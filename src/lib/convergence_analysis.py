@@ -28,11 +28,11 @@ def compute_rho_for_acc_admm(m, L, n_ZF, algo, v1=None, v2=None, rho_max=1.3, ep
 
 
     if algo=='ADMM':
-        v1 = 1 
+        v1 = 1/np.sqrt(m*L) 
         v2 = 0
         alpha = 1
     elif algo=='OR-ADMM':
-        v1 = 1 
+        v1 = 1/np.sqrt(m*L) 
         v2 = 0
 
     elif algo=='A-ADMM (NM)':

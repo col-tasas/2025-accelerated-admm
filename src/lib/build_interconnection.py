@@ -87,8 +87,6 @@ def build_appended_system(plant, unique_filter):
     return appended_system
 
 
-
-
 def combine_filters_different_nonlinearities(num_filters, *filters):
     """
     Important note
