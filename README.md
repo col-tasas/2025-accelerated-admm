@@ -1,9 +1,13 @@
 <!-- PROJECT SHIELDS -->
 [![arXiv][arxiv-shield]][arxiv-url]
 [![MIT License][license-shield]][license-url]
+
 [![ReseachGate][researchgate-shield]][researchgate-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 [![GIT][git-shield]][git-url]
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Meisam%20Tavakoli-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/meisam-tavakoli)
+[![GitHub](https://img.shields.io/badge/GitHub-Meisam--Tavakoli--97-181717?style=flat&logo=github&logoColor=white)](https://github.com/Meisam-Tavakoli-97)
 <!-- [![finalpaper][finalpaper-shield]][finalpaper-url] -->
 <!-- [![Scholar][scholar-shield]][scholar-url] -->
 <!-- [![Webpage][webpage-shield]][webpage-url] -->
